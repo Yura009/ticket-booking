@@ -8,11 +8,13 @@ import org.springframework.transaction.annotation.Transactional;
 import ua.epam.mishchenko.ticketbooking.document.TicketDocument;
 import ua.epam.mishchenko.ticketbooking.document.UserAccountDocument;
 import ua.epam.mishchenko.ticketbooking.document.UserDocument;
+import ua.epam.mishchenko.ticketbooking.model.Ticket;
 import ua.epam.mishchenko.ticketbooking.repository.UserMongoRepository;
 import ua.epam.mishchenko.ticketbooking.repository.UserRepository;
 
 import javax.annotation.PostConstruct;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -30,16 +32,10 @@ public class MigrationJob {
     @Transactional(readOnly = true)
     public void migrateUsers() {
         userRepository.findAll().forEach(user -> {
-            List<TicketDocument> ticketDocs = user.getTickets().stream().map(ticket -> {
-                TicketDocument td = new TicketDocument();
-                td.setEventId(new ObjectId(ticket.getEvent().getId().toString()));
-                td.setPlace(ticket.getPlace());
-                td.setCategory(ticket.getCategory());
-                return td;
-            }).collect(Collectors.toList());
+            List<TicketDocument> ticketDocs = convertToTicketDocuments(user.getTickets());
 
             UserAccountDocument userAccountDoc = new UserAccountDocument();
-            if (user.getUserAccount() != null) {
+            if (Objects.nonNull(user.getUserAccount())) {
                 userAccountDoc.setBalance(user.getUserAccount().getMoney());
             }
 
@@ -50,8 +46,19 @@ public class MigrationJob {
             userDoc.setUserAccount(userAccountDoc);
 
             userMongoRepository.save(userDoc);
-            log.info(String.valueOf(userMongoRepository.countUsersByEmailDomain()));
-
+            log.info("Number of users by email domain: {}", userMongoRepository.countUsersByEmailDomain());
         });
+    }
+
+    private List<TicketDocument> convertToTicketDocuments(List<Ticket> tickets) {
+        return tickets.stream()
+                .map(ticket -> {
+                    TicketDocument td = new TicketDocument();
+                    td.setEventId(new ObjectId(ticket.getEvent().getId().toString()));
+                    td.setPlace(ticket.getPlace());
+                    td.setCategory(ticket.getCategory());
+                    return td;
+                })
+                .collect(Collectors.toList());
     }
 }
