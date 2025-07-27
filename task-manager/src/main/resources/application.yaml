@@ -1,0 +1,5 @@
+# MongoDB settings
+spring.data.mongodb.uri=mongodb://localhost:27017/task_manager
+  
+  # Logging
+logging.level.org.springframework.data.mongodb.core.MongoTemplate=DEBUG

@@ -16,9 +16,10 @@ spring:
     show-sql: true
 
   datasource:
+    initialization-mode: always
     url: jdbc:postgresql://localhost:5432/ticket_booking
     username: postgres
-    password: pass
+    password: 0000
     driver-class-name: org.postgresql.Driver
 
 logging:
